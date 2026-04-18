@@ -1,0 +1,34 @@
+{
+  "format_name": "GlobalSat DG-388 .gpl GPS Track Log",
+  "description": "Proprietary binary format produced by the GlobalSat DG-388 GPS data logger. Each file is a bare sequence of fixed 28-byte records holding one GPS fix plus a record-type flag (automatic log vs. manual waypoint).",
+  "endianness": "little",
+  "structure": "fixed_record",
+  "record_size": 28,
+  "file_header_size": 0,
+  "skip_blank": {
+    "field_zero": ["date_int"]
+  },
+  "fields": [
+    {"name": "date_int",     "offset": 0,  "size": 4, "type": "i32", "encoding": "YYYYMMDD", "scale": null, "unit": null, "notes": "e.g. 20240511 = 2024-05-11"},
+    {"name": "time_int",     "offset": 4,  "size": 4, "type": "i32", "encoding": "HHMMSS",   "scale": null, "unit": "UTC", "notes": "UTC, not local"},
+    {"name": "latitude",     "offset": 8,  "size": 4, "type": "i32", "encoding": "degrees",  "scale": 10000000, "unit": "°", "notes": "signed; negative = South"},
+    {"name": "longitude",    "offset": 12, "size": 4, "type": "i32", "encoding": "degrees",  "scale": 10000000, "unit": "°", "notes": "signed; negative = West"},
+    {"name": "altitude_m",   "offset": 16, "size": 4, "type": "i32", "encoding": "meters",   "scale": 10, "unit": "m", "notes": "decimeters above MSL in the binary"},
+    {"name": "speed_kmh",    "offset": 20, "size": 4, "type": "i32", "encoding": "kmh",      "scale": 100, "unit": "km/h", "notes": "hundredths of km/h in the binary"},
+    {"name": "heading_deg",  "offset": 24, "size": 2, "type": "u16", "encoding": "degrees",  "scale": 100, "unit": "°", "notes": "course-over-ground 0.00-359.99"},
+    {"name": "record_flag",  "offset": 26, "size": 2, "type": "u16", "encoding": "enum",     "scale": null, "unit": null, "notes": "2 = automatic log, 3 = manual waypoint (1-click record button)"}
+  ],
+  "key_details": [
+    "Time is UTC, confirmed against GPX exports which suffix `Z`.",
+    "Altitude precedes speed in the binary even though the GlobalSat CSV puts speed first.",
+    "Bytes 24-27 are two packed uint16s, not a single uint32.",
+    "Coordinates use 1e-7 degree precision (~1.1 cm), same convention as FIT files."
+  ],
+  "validation": {
+    "sample_file": "05111426.gpl",
+    "records": 7130,
+    "verified_fields": ["latitude", "longitude", "altitude_m", "speed_kmh"],
+    "notes": "Found via csv_correlate.py against the GlobalSat PC tool CSV export at 100% match."
+  },
+  "provenance": "The format was decoded by running csv_correlate.py against a known-good CSV export from the GlobalSat PC tool, then confirming the remaining heading and record_flag fields with field_probe.py (heading against calculated bearings between consecutive GPS points; record_flag against the single flag=3 record corresponding to a manual waypoint button press while the aircraft was stationary)."
+}
